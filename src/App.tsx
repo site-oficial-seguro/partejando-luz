@@ -1130,7 +1130,22 @@ const MaterialPage = () => {
   const [view, setView] = useState<'login' | 'register'>('login');
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
-  const [showPDF, setShowPDF] = useState(false);
+  const materials = [
+    {
+      id: 'guia',
+      title: "Guia dos Prim. Dias",
+      subtitle: "Tudo o que você precisa saber para o início da jornada.",
+      file: "/material/guia-primeiros-dias.pdf"
+    },
+    {
+      id: 'shantala',
+      title: "Técnica de Shantala",
+      subtitle: "Aprenda a arte da massagem para conexão do bebê.",
+      file: "/material/shantala.pdf"
+    }
+  ];
+
+  const [activePDF, setActivePDF] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
@@ -1199,7 +1214,7 @@ const MaterialPage = () => {
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      setShowPDF(false);
+      setActivePDF(null);
     } catch (err) {
       console.error("Erro ao sair:", err);
     }
@@ -1216,6 +1231,7 @@ const MaterialPage = () => {
   };
 
   const status = getStatus();
+
 
   if (loading) {
     return (
@@ -1265,8 +1281,6 @@ const MaterialPage = () => {
                 />
               </div>
             </div>
-
-
 
             {error && <p className="text-red-500 text-xs text-center">{error}</p>}
 
@@ -1356,30 +1370,36 @@ const MaterialPage = () => {
             <div className="bg-white rounded-[60px] p-12 md:p-20 shadow-sm border border-brand-beige">
               <span className="text-brand-terracotta font-medium tracking-[0.2em] uppercase text-[10px]">Material Didático</span>
               <h2 className="text-4xl md:text-5xl font-serif text-brand-ink mt-4 mb-8">
-                A Doula: A Guardiã do <br />
-                <span className="italic">Parto Humanizado</span>
+                Sua Biblioteca de <br />
+                <span className="italic">Conhecimento</span>
               </h2>
               <p className="text-brand-ink/60 font-light leading-relaxed mb-10 max-w-2xl text-lg">
-                Este material exclusivo foi preparado para te guiar durante toda a sua gestação. Aproveite este recurso enquanto seu acesso estiver ativo.
+                Selecione abaixo o material que deseja consultar. Estes recursos foram preparados para te guiar em cada passo.
               </p>
 
               {status?.isAccessible ? (
-                    <div className="space-y-8">
-                      {!showPDF ? (
+                    <div className="grid sm:grid-cols-2 gap-8">
+                      {materials.map((item) => (
                         <div 
-                          className="aspect-video bg-brand-sand rounded-[40px] flex flex-col items-center justify-center cursor-pointer hover:bg-brand-beige/50 transition-all border-2 border-dashed border-brand-beige group"
+                          key={item.id}
+                          className="bg-brand-sand rounded-[40px] p-8 flex flex-col items-center text-center cursor-pointer hover:bg-brand-beige/50 transition-all border-2 border-dashed border-brand-beige group"
                           onClick={() => {
-                            setShowPDF(true);
+                            setActivePDF(item.file);
                             document.body.style.overflow = 'hidden';
                           }}
                         >
-                          <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center text-brand-terracotta mb-6 shadow-sm group-hover:scale-110 transition-transform">
-                            <FileText size={40} />
+                          <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-brand-terracotta mb-6 shadow-sm group-hover:scale-110 transition-transform">
+                            <FileText size={32} />
                           </div>
-                          <span className="text-brand-ink font-serif text-xl">Clique para ler o guia agora</span>
-                          <span className="text-[10px] uppercase tracking-widest text-brand-ink/40 mt-2">PDF Interativo • Visualização Online</span>
+                          <h3 className="text-brand-ink font-serif text-xl mb-2">{item.title}</h3>
+                          <p className="text-xs text-brand-ink/40 leading-relaxed px-4">{item.subtitle}</p>
+                          <span className="text-[10px] uppercase tracking-widest text-brand-terracotta font-bold mt-6 group-hover:gap-2 flex items-center transition-all">
+                            Abrir Material <ArrowRight size={12} className="ml-2" />
+                          </span>
                         </div>
-                      ) : (
+                      ))}
+
+                      {activePDF && (
                         <AnimatePresence>
                           <motion.div 
                             initial={{ opacity: 0 }}
@@ -1391,12 +1411,12 @@ const MaterialPage = () => {
                               <div className="flex items-center space-x-3">
                                 <FileText className="text-brand-rose" size={20} />
                                 <h4 className="text-white font-serif text-sm md:text-base truncate max-w-[200px] md:max-w-none">
-                                  A Doula: A Guardiã do Parto Humanizado
+                                  {materials.find(m => m.file === activePDF)?.title}
                                 </h4>
                               </div>
                               <button 
                                 onClick={() => {
-                                  setShowPDF(false);
+                                  setActivePDF(null);
                                   document.body.style.overflow = 'auto';
                                 }}
                                 className="flex items-center space-x-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-full transition-colors text-xs font-bold uppercase tracking-widest"
@@ -1409,9 +1429,9 @@ const MaterialPage = () => {
                             <div className="flex-1 w-full max-w-5xl mx-auto p-2 md:p-6 lg:p-10">
                               <div className="w-full h-full bg-white rounded-2xl md:rounded-[40px] overflow-hidden shadow-2xl relative">
                                 <iframe 
-                                  src="/material/A-Doula-A-Guardia-do-Parto-Humanizado.pdf#toolbar=0&navpanes=0&scrollbar=0" 
+                                  src={`${activePDF}#toolbar=0&navpanes=0&scrollbar=0`}
                                   className="w-full h-full border-none"
-                                  title="Guia de Parto Humanizado"
+                                  title="Visualizador de PDF"
                                 />
                               </div>
                             </div>
